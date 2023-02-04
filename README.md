@@ -1,37 +1,34 @@
-Клонировать репозиторий и перейти в него в командной строке:
+# Укоротитель ссылок YaCut
 
+YaCut умеет создавать новые ссылки для страниц которые вы предложите или использовать ваш вариант
+
+
+#### Запуск приложения:
+- Клонируйте репозиторий yacut командой в терминале:
+```commandline
+...$  git clone https://github.com/alinamalinapro/yacut.git
 ```
-git clone 
+- Активируйте виртуальное окружение командой:
+```commandline
+...yacut$ python -m virtualenv venv && .\venv\Scripts\activate
 ```
-
+- Установите библиотеки командой:
 ```
-cd yacut
-```
-
-Cоздать и активировать виртуальное окружение:
-
-```
-python3 -m venv venv
-```
-
-* Если у вас Linux/macOS
-
-    ```
-    source venv/bin/activate
-    ```
-
-* Если у вас windows
-
-    ```
-    source venv/scripts/activate
-    ```
-
-Установить зависимости из файла requirements.txt:
-
-```
-python3 -m pip install --upgrade pip
+(venv) ...$ python3 -m pip install --upgrade pip
 ```
 
 ```
-pip install -r requirements.txt
+(venv) ...$ pip install -r requirements.txt
 ```
+
+### Режимы работы:
+
+в терминале введите команду:
+
+```
+(venv) ...$ flask run
+
+```
+После запуска перейдите по [ссылке](http://127.0.0.1:5000/)
+
+Автор: [Провоторова Алина Игоревна](https://t.me/alinamalina998)
