@@ -17,14 +17,7 @@ from settings import (
 message_not_new_short = 'Новый уникальнй id не найден'
 message_non_body_input = 'Отсутствует тело запроса'
 message_non_url = '\"url\" является обязательным полем!'
-message_invalid_short_name = (
-    'Указано недопустимое имя для короткой ссылки, '
-    'имя должно состоять только из латинских букв и цифр'
-)
-message_invalid_short_len = (
-    'Недопустимая длинна для короткой ссылки, '
-    'ссылка должна составлять длину < 16 символов'
-)
+message_invalid_short = 'Указано недопустимое имя для короткой ссылки'
 message_invalid_url = 'Указано недопустимое имя для длинной ссылки'
 message_non_unique_short = 'Имя "{}" уже занято.'
 
@@ -90,7 +83,6 @@ class URLMap(db.Model):
             if data['custom_id'] is not None \
                     and len(data['custom_id']) > 0 \
                     and data['custom_id'] != "":
-                if not re.match(PATTERN_VALID_CHARACTERS, data['custom_id']):
-                    raise ValueError(message_invalid_short_name)
-                if len(data['custom_id']) > MAX_SIZE_SHORT_FOR_USER:
-                    raise ValueError(message_invalid_short_len)
+                if not re.match(PATTERN_VALID_CHARACTERS, data['custom_id']) \
+                        or len(data['custom_id']) > MAX_SIZE_SHORT_FOR_USER:
+                    raise ValueError(message_invalid_short)
