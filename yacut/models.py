@@ -1,21 +1,37 @@
+import re
 from datetime import datetime
 from random import sample
 
 from flask import url_for
 
 from . import db
-from .constants import (
+from settings import (
     MAX_SIZE_SHORT,
-    MAX_SIZE_URL,
-    MAX_COUNT,
-    MAX_SIZE_SHORT_FOR_USER, VALID_CHARACTERS
+    MAX_COUNT_CREATE_SHORT,
+    MAX_SIZE_SHORT_FOR_USER,
+    PATTERN_VALID_CHARACTERS,
+    PATTERN_VALID_URL,
+    VALID_CHARACTERS
 )
-from .error_handlers import InvalidAPIUsage
+
+message_not_new_short = 'Новый уникальнй id не найден'
+message_non_body_input = 'Отсутствует тело запроса'
+message_non_url = '\"url\" является обязательным полем!'
+message_invalid_short_name = (
+    'Указано недопустимое имя для короткой ссылки, '
+    'имя должно состоять только из латинских букв и цифр'
+)
+message_invalid_short_len = (
+    'Недопустимая длинна для короткой ссылки, '
+    'ссылка должна составлять длину < 16 символов'
+)
+message_invalid_url = 'Указано недопустимое имя для длинной ссылки'
+message_non_unique_short = 'Имя "{}" уже занято.'
 
 
 class URLMap(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    original = db.Column(db.String(MAX_SIZE_URL), unique=True, nullable=False)
+    original = db.Column(db.String, nullable=False)
     short = db.Column(
         db.String(MAX_SIZE_SHORT_FOR_USER), unique=True, nullable=False)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
@@ -31,6 +47,16 @@ class URLMap(db.Model):
         self.short = data['custom_id']
 
     @staticmethod
+    def create_urlmap(data, custom_id):
+        if not custom_id or custom_id is None or len(custom_id) == 0 or custom_id == "":
+            custom_id = URLMap.get_unique_short_id()
+        urlmap = URLMap()
+        data['custom_id'] = custom_id
+        urlmap.from_dict(data)
+        URLMap.db_commit(urlmap)
+        return urlmap
+
+    @staticmethod
     def get_model_from_bd(short_id=None, url=None):
         if short_id is not None:
             return URLMap.query.filter_by(short=short_id).first()
@@ -42,30 +68,29 @@ class URLMap(db.Model):
         db.session.commit()
 
     @staticmethod
-    def get_unique_short_id(short_link=None):
-        if not short_link or short_link is None or len(short_link) == 0 or short_link == "":
-            count = 0
-            short_link = ''.join(sample(VALID_CHARACTERS, MAX_SIZE_SHORT))
-            while URLMap.get_model_from_bd(short_id=short_link) is not None:
-                short_link = ''.join(sample(VALID_CHARACTERS, MAX_SIZE_SHORT))
-                count += 1
-                if count > MAX_COUNT:
-                    short_link = None
-                    break
-        return short_link
+    def get_unique_short_id():
+        short_link = ''.join(sample(VALID_CHARACTERS, MAX_SIZE_SHORT))
+        for i in range(MAX_COUNT_CREATE_SHORT):
+            if URLMap.get_model_from_bd(short_id=short_link) is None:
+                return short_link
+        else:
+            return message_not_new_short
 
     @staticmethod
     def input_validation(data):
         if data is None:
-            raise InvalidAPIUsage('Отсутствует тело запроса')
+            raise ValueError(message_non_body_input)
         if 'url' not in data:
-            raise InvalidAPIUsage('\"url\" является обязательным полем!')
-        if dict(data).get('custom_id') is not None:
-            if len(str(data['custom_id'])) > MAX_SIZE_SHORT_FOR_USER:
-                raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки')
-            for char in data['custom_id']:
-                if char not in VALID_CHARACTERS:
-                    raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки')
+            raise ValueError(message_non_url)
+        if not re.match(PATTERN_VALID_URL, data['url']):
+            raise ValueError(message_invalid_url)
+        if 'custom_id' in data:
             if URLMap.get_model_from_bd(short_id=data['custom_id']):
-                raise InvalidAPIUsage(f'Имя "{data["custom_id"]}" уже занято.')
-        return True
+                raise ValueError(message_non_unique_short.format(data['custom_id']))
+            if data['custom_id'] is not None \
+                    and len(data['custom_id']) > 0 \
+                    and data['custom_id'] != "":
+                if not re.match(PATTERN_VALID_CHARACTERS, data['custom_id']):
+                    raise ValueError(message_invalid_short_name)
+                if len(data['custom_id']) > MAX_SIZE_SHORT_FOR_USER:
+                    raise ValueError(message_invalid_short_len)
