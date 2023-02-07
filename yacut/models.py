@@ -2,7 +2,6 @@ import re
 import urllib.parse
 from datetime import datetime
 from random import sample
-from urllib.error import URLError
 
 from flask import url_for
 
@@ -16,7 +15,7 @@ from settings import (
     _,
 )
 
-MESSAGE_NON_NEW_SHORT = 'Новый уникальнй id не найден'
+MESSAGE_NON_NEW_SHORT = 'Новый уникальный id не найден'
 MESSAGE_INVALID_SHORT = 'Указано недопустимое имя для короткой ссылки'
 MESSAGE_INVALID_URL = 'Указано недопустимое имя для длинной ссылки'
 MESSAGE_NON_UNIQUE_SHORT = 'Имя "{}" уже занято.'
