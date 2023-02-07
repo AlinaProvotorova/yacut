@@ -1,30 +1,30 @@
 import re
+import urllib.request
 from datetime import datetime
 from random import sample
+from urllib.error import URLError
 
 from flask import url_for
 
 from . import db
 from settings import (
     MAX_SIZE_SHORT,
-    MAX_COUNT_CREATE_SHORT,
+    MAX_SIZE_URL,
     MAX_SIZE_SHORT_FOR_USER,
     PATTERN_VALID_CHARACTERS,
-    PATTERN_VALID_URL,
-    VALID_CHARACTERS
+    VALID_CHARACTERS,
+    _MAXIMUM_COUNT_CREATE_SHORT,
 )
 
-message_not_new_short = 'Новый уникальнй id не найден'
-message_non_body_input = 'Отсутствует тело запроса'
-message_non_url = '\"url\" является обязательным полем!'
-message_invalid_short = 'Указано недопустимое имя для короткой ссылки'
-message_invalid_url = 'Указано недопустимое имя для длинной ссылки'
-message_non_unique_short = 'Имя "{}" уже занято.'
+MESSAGE_NOT_NEW_SHORT = 'Новый уникальнй id не найден'
+MESSAGE_INVALID_SHORT = 'Указано недопустимое имя для короткой ссылки'
+MESSAGE_INVALID_URL = 'Указано недопустимое имя для длинной ссылки'
+MESSAGE_NON_UNIQUE_SHORT = 'Имя "{}" уже занято.'
 
 
 class URLMap(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    original = db.Column(db.String, nullable=False)
+    original = db.Column(db.String(MAX_SIZE_URL), nullable=False)
     short = db.Column(
         db.String(MAX_SIZE_SHORT_FOR_USER), unique=True, nullable=False)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
@@ -40,12 +40,21 @@ class URLMap(db.Model):
         self.short = data['custom_id']
 
     @staticmethod
-    def create_urlmap(data, custom_id):
+    def create_urlmap(url, custom_id):
         if not custom_id or custom_id is None or len(custom_id) == 0 or custom_id == "":
+            data = URLMap.get_model_from_bd(url=url)
+            if data is not None:
+                return URLMap(
+                    original=data.original,
+                    short=data.short
+                )
             custom_id = URLMap.get_unique_short_id()
-        urlmap = URLMap()
-        data['custom_id'] = custom_id
-        urlmap.from_dict(data)
+            if custom_id is None:
+                raise ValueError(MESSAGE_NOT_NEW_SHORT)
+        urlmap = URLMap(
+            original=url,
+            short=custom_id
+        )
         URLMap.db_commit(urlmap)
         return urlmap
 
@@ -62,27 +71,20 @@ class URLMap(db.Model):
 
     @staticmethod
     def get_unique_short_id():
-        short_link = ''.join(sample(VALID_CHARACTERS, MAX_SIZE_SHORT))
-        for i in range(MAX_COUNT_CREATE_SHORT):
+        for i in range(_MAXIMUM_COUNT_CREATE_SHORT):
+            short_link = ''.join(sample(VALID_CHARACTERS, MAX_SIZE_SHORT))
             if URLMap.get_model_from_bd(short_id=short_link) is None:
                 return short_link
-        else:
-            return message_not_new_short
+        return None
 
     @staticmethod
-    def input_validation(data):
-        if data is None:
-            raise ValueError(message_non_body_input)
-        if 'url' not in data:
-            raise ValueError(message_non_url)
-        if not re.match(PATTERN_VALID_URL, data['url']):
-            raise ValueError(message_invalid_url)
-        if 'custom_id' in data:
-            if URLMap.get_model_from_bd(short_id=data['custom_id']):
-                raise ValueError(message_non_unique_short.format(data['custom_id']))
-            if data['custom_id'] is not None \
-                    and len(data['custom_id']) > 0 \
-                    and data['custom_id'] != "":
-                if not re.match(PATTERN_VALID_CHARACTERS, data['custom_id']) \
-                        or len(data['custom_id']) > MAX_SIZE_SHORT_FOR_USER:
-                    raise ValueError(message_invalid_short)
+    def json_input_validation(url, custom_id):
+        try:
+            urllib.request.urlopen(url)
+        except URLError:
+            raise ValueError(MESSAGE_INVALID_URL)
+        if custom_id is not None and len(custom_id) > 0 and custom_id != "":
+            if not re.match(PATTERN_VALID_CHARACTERS, custom_id) or len(custom_id) > MAX_SIZE_SHORT_FOR_USER:
+                raise ValueError(MESSAGE_INVALID_SHORT)
+        if URLMap.get_model_from_bd(short_id=custom_id):
+            raise ValueError(MESSAGE_NON_UNIQUE_SHORT.format(custom_id))
