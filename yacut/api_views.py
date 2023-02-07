@@ -27,7 +27,8 @@ def add_url():
     try:
         urlmap = URLMap.create(
             json_response['url'],
-            dict(json_response).get('custom_id')
+            json_response.get('custom_id'),
+            True
         )
     except ValueError as error:
         raise InvalidAPIUsage(str(error))

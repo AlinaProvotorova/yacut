@@ -30,17 +30,19 @@ SUBMIT = 'Создать'
 class URLMapForm(FlaskForm):
     original_link = StringField(
         ORIGINAL_LINK_INPUT,
-        validators=[DataRequired(message=MESSAGE_NO_URL),
-                    URL(True, message=MESSAGE_INVALID_URL),
-                    Length(max=MAX_SIZE_URL)]
+        validators=[
+            DataRequired(message=MESSAGE_NO_URL),
+            URL(True, message=MESSAGE_INVALID_URL),
+            Length(max=MAX_SIZE_URL)
+        ]
     )
     custom_id = StringField(
         CUSTOM_ID_INPUT,
-        validators=[Length(max=MAX_SIZE_SHORT_FOR_USER),
-                    Optional(),
-                    Regexp(PATTERN_VALID_CHARACTERS,
-                           message=MESSAGE_INVALID_SHORT)]
-
+        validators=[
+            Length(max=MAX_SIZE_SHORT_FOR_USER),
+            Optional(),
+            Regexp(PATTERN_VALID_CHARACTERS, message=MESSAGE_INVALID_SHORT)
+        ]
     )
     submit = SubmitField(SUBMIT)
 

@@ -12,7 +12,7 @@ from settings import (
     MAX_SIZE_SHORT_FOR_USER,
     PATTERN_VALID_CHARACTERS,
     VALID_CHARACTERS,
-    _,
+    MAX_COUNT_GET_UNIQUE_SHORT,
 )
 
 MESSAGE_NON_NEW_SHORT = 'Новый уникальный id не найден'
@@ -42,12 +42,13 @@ class URLMap(db.Model):
         self.short = data['custom_id']
 
     @staticmethod
-    def create(url, custom_id=None):
-        URLMap.url_custom_id_validation(url, custom_id)
-        if not custom_id or custom_id is None or custom_id == "":
-            data = URLMap.get_model_from_bd(url=url)
-            if data is not None:
-                return data
+    def create(url, custom_id=None, api=False):
+        if api:
+            URLMap.url_custom_id_validation(url, custom_id)
+        if custom_id is None or custom_id == "":
+            data = URLMap.get_model_from_bd(url=url)  # запрос модели из базы данных по URL
+            if data is not None:                      # если такая модель - возврат уже ранее созданной коротульки
+                return data                           # без присваивания авто созданного значения
             custom_id = URLMap.get_unique_short_id()
         urlmap = URLMap(
             original=url,
@@ -65,7 +66,7 @@ class URLMap(db.Model):
 
     @staticmethod
     def get_unique_short_id():
-        for i in range(_):
+        for _ in range(MAX_COUNT_GET_UNIQUE_SHORT):
             short_link = ''.join(sample(VALID_CHARACTERS, MAX_SIZE_SHORT))
             if URLMap.get_model_from_bd(short_id=short_link) is None:
                 return short_link
@@ -73,12 +74,14 @@ class URLMap(db.Model):
 
     @staticmethod
     def url_custom_id_validation(url, custom_id=None):
-        if (len(url) > MAX_SIZE_URL or
-                urllib.parse.urlsplit(url).scheme not in ['http', 'https']):
+        if len(url) > MAX_SIZE_URL:
+            raise ValueError(MESSAGE_INVALID_URL)
+        if urllib.parse.urlsplit(url).scheme not in ['http', 'https']:
             raise ValueError(MESSAGE_INVALID_URL)
         if custom_id is not None and custom_id != "":
-            if (len(custom_id) > MAX_SIZE_SHORT_FOR_USER or
-                    not re.match(PATTERN_VALID_CHARACTERS, custom_id)):
+            if len(custom_id) > MAX_SIZE_SHORT_FOR_USER:
                 raise ValueError(MESSAGE_INVALID_SHORT)
-        if URLMap.get_model_from_bd(short_id=custom_id):
-            raise ValueError(MESSAGE_NON_UNIQUE_SHORT.format(custom_id))
+            if not re.match(PATTERN_VALID_CHARACTERS, custom_id):
+                raise ValueError(MESSAGE_INVALID_SHORT)
+            if URLMap.get_model_from_bd(short_id=custom_id):
+                raise ValueError(MESSAGE_NON_UNIQUE_SHORT.format(custom_id))
