@@ -1,4 +1,5 @@
 import os
+import re
 from string import ascii_letters, digits
 
 
@@ -12,5 +13,5 @@ MAX_SIZE_SHORT = 6
 MAX_SIZE_URL = 2048
 MAX_SIZE_SHORT_FOR_USER = 16
 VALID_CHARACTERS = ascii_letters + digits
-PATTERN_VALID_CHARACTERS = r'^[A-Za-z0-9]+$'
-_MAXIMUM_COUNT_CREATE_SHORT = len(VALID_CHARACTERS) ** MAX_SIZE_SHORT - 1
+PATTERN_VALID_CHARACTERS = fr'^[{re.escape(VALID_CHARACTERS)}]+$'
+_ = 10

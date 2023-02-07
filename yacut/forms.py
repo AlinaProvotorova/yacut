@@ -1,14 +1,23 @@
 from .models import URLMap
-from settings import PATTERN_VALID_CHARACTERS, MAX_SIZE_SHORT_FOR_USER, MAX_SIZE_URL
+from settings import (
+    PATTERN_VALID_CHARACTERS,
+    MAX_SIZE_SHORT_FOR_USER,
+    MAX_SIZE_URL)
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired, Length, Optional, Regexp, ValidationError, URL
+from wtforms.validators import (
+    DataRequired,
+    Length,
+    Optional,
+    Regexp,
+    ValidationError,
+    URL)
 
 ORIGINAL_LINK_INPUT = 'Длинная ссылка'
 CUSTOM_ID_INPUT = 'Ваш вариант короткой ссылки'
 
-MESSAGE_NOT_URL = 'Обязательное поле'
+MESSAGE_NO_URL = 'Обязательное поле'
 MESSAGE_INVALID_SHORT = (
     'Указано недопустимое имя для короткой ссылки, '
     'имя должно состоять только из латинских букв и цифр'
@@ -21,7 +30,7 @@ SUBMIT = 'Создать'
 class URLMapForm(FlaskForm):
     original_link = StringField(
         ORIGINAL_LINK_INPUT,
-        validators=[DataRequired(message=MESSAGE_NOT_URL),
+        validators=[DataRequired(message=MESSAGE_NO_URL),
                     URL(True, message=MESSAGE_INVALID_URL),
                     Length(max=MAX_SIZE_URL)]
     )
@@ -29,7 +38,8 @@ class URLMapForm(FlaskForm):
         CUSTOM_ID_INPUT,
         validators=[Length(max=MAX_SIZE_SHORT_FOR_USER),
                     Optional(),
-                    Regexp(PATTERN_VALID_CHARACTERS, message=MESSAGE_INVALID_SHORT)]
+                    Regexp(PATTERN_VALID_CHARACTERS,
+                           message=MESSAGE_INVALID_SHORT)]
 
     )
     submit = SubmitField(SUBMIT)

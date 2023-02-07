@@ -11,14 +11,17 @@ def yacut_view():
     if not form.validate_on_submit():
         return render_template('index.html', form=form)
     try:
-        urlmap = URLMap.create_urlmap(form.original_link.data, form.custom_id.data)
+        urlmap = URLMap.create(form.original_link.data, form.custom_id.data)
     except ValueError as error:
         flash(message=str(error))
         return render_template('index.html', form=form)
     return render_template(
         'index.html',
         form=form,
-        short_link=url_for('new_link_view', short_id=urlmap.short, _external=True)
+        short_link=url_for(
+            'new_link_view',
+            short_id=urlmap.short,
+            _external=True)
     )
 
 

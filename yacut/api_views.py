@@ -4,7 +4,7 @@ from . import app
 from .error_handlers import InvalidAPIUsage
 from .models import URLMap
 
-MESSAGE_NOT_SHORT = 'Указанный id не найден'
+MESSAGE_NON_SHORT = 'Указанный id не найден'
 MESSAGE_NON_BODY_INPUT = 'Отсутствует тело запроса'
 MESSAGE_NON_URL = '\"url\" является обязательным полем!'
 
@@ -13,7 +13,7 @@ MESSAGE_NON_URL = '\"url\" является обязательным полем!
 def get_url(short_id):
     url = URLMap.get_model_from_bd(short_id=short_id)
     if url is None:
-        raise InvalidAPIUsage(MESSAGE_NOT_SHORT, 404)
+        raise InvalidAPIUsage(MESSAGE_NON_SHORT, 404)
     return jsonify({'url': url.original}), 200
 
 
@@ -25,8 +25,10 @@ def add_url():
     if 'url' not in json_response or type(json_response['url']) != str:
         raise InvalidAPIUsage(MESSAGE_NON_URL)
     try:
-        URLMap.json_input_validation(json_response['url'], dict(json_response).setdefault('custom_id'))
-        urlmap = URLMap.create_urlmap(json_response['url'], dict(json_response).setdefault('custom_id'))
+        urlmap = URLMap.create(
+            json_response['url'],
+            dict(json_response).get('custom_id')
+        )
     except ValueError as error:
         raise InvalidAPIUsage(str(error))
     return jsonify(urlmap.to_dict()), 201

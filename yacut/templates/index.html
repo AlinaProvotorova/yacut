@@ -47,19 +47,21 @@
         </div>
         <div class="col-sm">
           <p class="text-center">
-            {% with message = get_flashed_messages() %}
-              {% if short_link %}
-                <h5 class="text-center"> Ваша новая ссылка готова: </h5>
-                <h5 class="text-center">
-                  <a href="{{ short_link }}">{{ short_link }}</a>
-                </h5>
-              {% elif message %}
-                {% for msg in message %}
-                  <h5>{{ msg }}</h5>
-                {% endfor %}
+
+
+            {% if short_link %}
+              <h5 class="text-center"> Ваша новая ссылка готова: </h5>
+              <h5 class="text-center">
+                <a href="{{ short_link }}">{{ short_link }}</a>
+              </h5>
               {% elif not short_link %}
                 <h5 class="text-center"> Здесь будет ваша ссылка </h5>
               {% endif %}
+
+            {% with message = get_flashed_messages() %}
+              {% for message in message %}
+                <h5>{{ message }}</h5>
+              {% endfor %}
             {% endwith %}
           </p>
         </div>
